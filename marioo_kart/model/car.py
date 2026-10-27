@@ -1,10 +1,34 @@
 import pygame
 import math
+from dataclasses import dataclass
 from constants import (
     CAR_ACCELERATION, CAR_WIDTH, CAR_HEIGHT, TILE_SIZE
 )
 
+@dataclass
+class CarControls:
+    """The controls of one player for the current frame."""
 
+    accelerate: bool = False
+    brake: bool = False
+    turn_left: bool = False
+    turn_right: bool = False
+    item: bool = False
+
+    @property
+    def throttle(self) -> int:
+        """Return 1 to accelerate, -1 to brake and 0 when neutral."""
+        if self.accelerate and not self.brake:
+            return 1
+        if self.brake and not self.accelerate:
+            return -1
+        return 0
+
+    @property
+    def steering(self) -> int:
+        """Return 1 for left, -1 for right and 0 when not steering."""
+        return int(self.turn_left) - int(self.turn_right)
+    
 class Car:
 
     def __init__(self, start_col: int, start_row: int):
