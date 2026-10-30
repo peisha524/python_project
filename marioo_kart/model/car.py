@@ -1,9 +1,19 @@
 import pygame
 import math
 from dataclasses import dataclass
+from pygame.math import Vector2
 from constants import (
-    CAR_ACCELERATION, CAR_WIDTH, CAR_HEIGHT, TILE_SIZE
+    CAR_WIDTH, CAR_HEIGHT, TILE_SIZE
 )
+from model.physics import (
+    BOOST_ACCELERATION,
+    BRAKE_DECELERATION,
+    ENGINE_ACCELERATION,
+    MAX_REVERSE_SPEED,
+    MAX_SPEED,
+    REVERSE_ACCELERATION,
+)
+from model.terrain import Terrain
 
 @dataclass
 class CarControls:
@@ -34,12 +44,51 @@ class Car:
     def __init__(self, start_col: int, start_row: int):
         self.x = start_col * TILE_SIZE + TILE_SIZE // 2
         self.y = start_row * TILE_SIZE + TILE_SIZE // 2
-        self.speed: float = 0.0
+        self.velocity = Vector2(0.0, 0.0)
         self.angle: float = 0.0
+        self.controls = CarControls()
+        self.boost_time = 0.0
         self.sprite = self.build_sprite()
 
-    def accelerate(self) -> None:
-        self.speed += CAR_ACCELERATION
+    @property
+    def speed(self) -> float:
+        """Norm of the velocity, in pixels per second."""
+        return self.velocity.length()
+        
+    @property
+    def forward_speed(self) -> float:
+        """Longitudinal speed, positive forward and negative in reverse."""
+        heading = Vector2(math.cos(self.angle), math.sin(self.angle))
+        return self.velocity.dot(heading)
+
+    def set_controls(self, controls: CarControls) -> None:
+        """Replace the controls applied during the next physics step."""
+        self.controls = controls
+
+    def _longitudinal_acceleration(
+        self,
+        terrain: Terrain,
+        forward_speed: float,
+    ) -> float:
+        """Return the longitudinal acceleration for the current inputs."""
+        throttle = self.controls.throttle
+        traction = terrain.traction
+        acceleration = 0.0
+
+        if throttle > 0:
+            if forward_speed < -1.0:
+                acceleration = BRAKE_DECELERATION * traction
+            else:
+                acceleration = ENGINE_ACCELERATION * traction
+        elif throttle < 0:
+            if forward_speed > 1.0:
+                acceleration = -BRAKE_DECELERATION * traction
+            else:
+                acceleration = -REVERSE_ACCELERATION * traction
+
+        if self.boost_time > 0.0:
+            acceleration += BOOST_ACCELERATION
+        return acceleration
 
     def update_position(self) -> None:
         self.y += self.speed
