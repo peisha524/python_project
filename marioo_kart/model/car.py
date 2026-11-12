@@ -11,7 +11,11 @@ from model.physics import (
     ENGINE_ACCELERATION,
     MAX_REVERSE_SPEED,
     MAX_SPEED,
+    MAX_STEER_ANGLE,
     REVERSE_ACCELERATION,
+    STEER_FULL_SPEED,
+    STEER_RATE,
+    STEER_SMOOTHING,
 )
 from model.terrain import Terrain
 
@@ -46,6 +50,7 @@ class Car:
         self.y = start_row * TILE_SIZE + TILE_SIZE // 2
         self.velocity = Vector2(0.0, 0.0)
         self.angle: float = 0.0
+        self.steering_angle = 0.0
         self.controls = CarControls()
         self.boost_time = 0.0
         self.sprite = self.build_sprite()
@@ -64,6 +69,23 @@ class Car:
     def set_controls(self, controls: CarControls) -> None:
         """Replace the controls applied during the next physics step."""
         self.controls = controls
+
+    def _update_steering(self, dt: float, forward_speed: float) -> None:
+        """Smooth the steering angle and rotate the car orientation."""
+        target = self.controls.steering * MAX_STEER_ANGLE
+        blend = min(1.0, STEER_SMOOTHING * dt)
+        self.steering_angle += (target - self.steering_angle) * blend
+
+        if abs(forward_speed) < 1.0:
+            return
+
+        speed_factor = min(1.0, abs(forward_speed) / STEER_FULL_SPEED)
+        turn = (self.steering_angle / MAX_STEER_ANGLE) * STEER_RATE * speed_factor
+        if forward_speed < 0.0:
+            turn = -turn
+        # In screen coordinates the y axis points downwards, so a positive
+        # steering angle (left) rotates the car counter-clockwise on screen.
+        self.angle -= turn * dt
 
     def _longitudinal_acceleration(
         self,
