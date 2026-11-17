@@ -54,12 +54,22 @@ class GameController:
 
         p1_input = self.input_handler.get_inputs()
         car = self.model.car
+        if car is None or self.model.circuit is None:
+            return
         self.apply_input(car, p1_input)
         self.model.update()
 
     def apply_input(self, car, player_input) -> None:
+        tile = self.model.circuit.get_tile_at_position(car.x, car.y)
+        traction = tile.traction if tile is not None else 0.0
         if player_input['accelerate']:
-            car.accelerate()
+            car.accelerate(traction)
+        if player_input['brake']:
+            car.brake(traction)
+        if player_input['steer_left']:
+            car.steer(-1, traction)
+        if player_input['steer_right']:
+            car.steer(1, traction)
 
     def render(self) -> None:
         self.view.draw(self.model)

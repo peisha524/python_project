@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
 from constants import GRID_COLS, GRID_ROWS, TILE_SIZE
-from model.road_tile import RoadTile, TerrainType
+from model.road_tile import RoadTile, TerrainType, TrackMarker
 
 
 class Circuit:
@@ -29,7 +29,7 @@ class Circuit:
             for row in range(rows)
         ]
 
-        # The two-cell-wide loop leaves a visible infield and has connected corners.
+
         for row in (1, 2, rows - 3, rows - 2):
             for col in range(1, cols - 1):
                 grid[row][col].terrain = TerrainType.ROAD
@@ -37,11 +37,17 @@ class Circuit:
             for row in range(2, rows - 2):
                 grid[row][col].terrain = TerrainType.ROAD
 
+    
+        grid[1][cols // 2].marker = TrackMarker.START_FINISH
+        grid[rows // 2][cols - 2].marker = TrackMarker.CHECKPOINT
+        grid[rows - 2][cols // 2].marker = TrackMarker.CHECKPOINT
+        grid[rows // 2][1].marker = TrackMarker.CHECKPOINT
+        grid[1][cols // 2 + 2].marker = TrackMarker.BOOST
+
         return cls(grid)
 
     @classmethod
     def from_layout(cls, layout: Iterable[str]) -> "Circuit":
-        """Create rows of cells: G road, . grass, D dirt, S sand, I ice, # barrier."""
         terrain_by_symbol = {
             "G": TerrainType.ROAD,
             ".": TerrainType.GRASS,
@@ -49,6 +55,13 @@ class Circuit:
             "S": TerrainType.SAND,
             "I": TerrainType.ICE,
             "#": TerrainType.BARRIER,
+        }
+        marker_by_symbol = {
+            "X": TrackMarker.START_FINISH,
+            "A": TrackMarker.START,
+            "F": TrackMarker.FINISH,
+            "C": TrackMarker.CHECKPOINT,
+            "B": TrackMarker.BOOST,
         }
         lines = list(layout)
         if not lines or not lines[0]:
@@ -60,6 +73,9 @@ class Circuit:
         for row, line in enumerate(lines):
             tiles = []
             for col, symbol in enumerate(line):
+                if symbol in marker_by_symbol:
+                    tiles.append(RoadTile(col, row, TerrainType.ROAD, marker_by_symbol[symbol]))
+                    continue
                 if symbol not in terrain_by_symbol:
                     raise ValueError(f"Unknown terrain symbol {symbol!r} at ({col}, {row})")
                 tiles.append(RoadTile(col, row, terrain_by_symbol[symbol]))
@@ -76,6 +92,24 @@ class Circuit:
         if px < 0 or py < 0:
             return None
         return self.get_tile(int(px // TILE_SIZE), int(py // TILE_SIZE))
+
+    def get_tile_at_position(self, x: float, y: float) -> RoadTile | None:
+        return self.get_tile_at_pixel(x, y)
+
+    def get_marker_at_pixel(self, px: float, py: float) -> TrackMarker:
+        tile = self.get_tile_at_pixel(px, py)
+        return tile.marker if tile is not None else TrackMarker.NONE
+
+    def tiles_with_marker(self, marker: TrackMarker) -> list[RoadTile]:
+        return [tile for row in self.grid for tile in row if tile.marker == marker]
+
+    def get_markers_at_pixel(self, px: float, py: float) -> frozenset[TrackMarker]:
+        marker = self.get_marker_at_pixel(px, py)
+        if marker == TrackMarker.START_FINISH:
+            return frozenset((TrackMarker.START, TrackMarker.FINISH))
+        if marker == TrackMarker.NONE:
+            return frozenset()
+        return frozenset((marker,))
 
     def terrain_at_pixel(self, px: float, py: float) -> TerrainType | None:
         tile = self.get_tile_at_pixel(px, py)
