@@ -10,6 +10,8 @@ class GameModel:
         self.state: str = GameState.MENU
         self.circuit: Circuit | None = None
         self.car: Car | None = None
+        self.circuit_names = ["Circuit classique", "Circuit mixte"]
+        self.selected_circuit_index = 0
 
     def load_circuit(self) -> None:
         self.circuit = Circuit.build_default()

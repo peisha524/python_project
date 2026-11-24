@@ -17,6 +17,8 @@ class GameView:
         self.screen.fill(COLOR_BG)
         if model.state == GameState.MENU:
             self._draw_menu(model)
+        elif model.state == GameState.TRACK_SELECT:
+            self._draw_track_select(model)
         elif model.state == GameState.RACING:
             self._draw_racing(model)
         pygame.display.flip()
@@ -52,3 +54,28 @@ class GameView:
             return
         surf, rect = model.car.get_rotated_sprite()
         self.screen.blit(surf, rect)
+
+
+    def _draw_track_select(self, model: GameModel) -> None:
+        cx = WINDOW_WIDTH // 2
+
+        title = self.font.render(
+            "Choisir un circuit", True, COLOR_ACCENT
+        )
+        self.screen.blit(title, title.get_rect(center=(cx, 180)))
+
+        for index, name in enumerate(model.circuit_names):
+            selected = index == model.selected_circuit_index
+            color = COLOR_ACCENT if selected else COLOR_TEXT
+            label = "> " + name if selected else name
+
+            text = self.font.render(label, True, color)
+            self.screen.blit(
+                text, text.get_rect(center=(cx, 320 + index * 70))
+            )
+
+        hint = self.font.render(
+            "Haut/Bas : choisir | Enter : jouer | Esc : retour",
+            True, COLOR_TEXT
+        )
+        self.screen.blit(hint, hint.get_rect(center=(cx, 550)))
