@@ -33,14 +33,18 @@ class GameController:
 
             elif event.type == pygame.KEYDOWN:
                 self.handle_keydown(event.key)
-
     def handle_keydown(self, key: int) -> None:
         state = self.model.state
 
         if state == GameState.MENU:
             self.handle_menu_key(key)
+
         elif state == GameState.TRACK_SELECT:
             self.handle_track_select_key(key)
+
+        elif state == GameState.RACING:
+            if key == pygame.K_ESCAPE:
+                self.model.state = GameState.TRACK_SELECT
 
     def handle_menu_key(self, key: int) -> None:
         if key == pygame.K_RETURN:

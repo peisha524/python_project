@@ -21,6 +21,8 @@ class GameView:
             self._draw_track_select(model)
         elif model.state == GameState.RACING:
             self._draw_racing(model)
+            self._draw_hud(model)
+
         pygame.display.flip()
 
     def _draw_menu(self, model: GameModel) -> None:
@@ -79,3 +81,31 @@ class GameView:
             True, COLOR_TEXT
         )
         self.screen.blit(hint, hint.get_rect(center=(cx, 550)))
+
+    def _draw_hud(self, model: GameModel) -> None:
+        if model.car is None:
+            return
+
+        panel = pygame.Rect(10, 10, WINDOW_WIDTH - 20, 44)
+        pygame.draw.rect(
+            self.screen, COLOR_PANEL, panel, border_radius=8
+        )
+
+        circuit_name = model.circuit_names[
+            model.selected_circuit_index
+        ]
+        speed = model.car.speed
+
+        text = self.font.render(
+            f"{circuit_name} | Vitesse : {speed:.1f} px/frame",
+            True, COLOR_TEXT
+        )
+        self.screen.blit(text, (22, 20))
+
+        hint = self.font.render(
+            "Esc : circuits", True, COLOR_ACCENT
+        )
+        self.screen.blit(
+            hint,
+            hint.get_rect(topright=(WINDOW_WIDTH - 22, 20))
+        )

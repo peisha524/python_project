@@ -1,7 +1,7 @@
 from constants import GameState
 from model.car import Car
 from model.circuit import Circuit
-from model.road_tile import RoadTile, TrackMarker
+from model.road_tile import RoadTile, TrackMarker, TerrainType
 
 
 class GameModel:
@@ -15,6 +15,15 @@ class GameModel:
 
     def load_circuit(self) -> None:
         self.circuit = Circuit.build_default()
+
+        if self.selected_circuit_index == 1:
+            for col in range(3, self.circuit.cols - 3):
+                for row in (1, 2):
+                    self.circuit.grid[row][col].terrain = TerrainType.DIRT
+
+                for row in (self.circuit.rows - 3, self.circuit.rows - 2):
+                    self.circuit.grid[row][col].terrain = TerrainType.ICE
+
         self.spawn_car()
 
     def spawn_car(self) -> None:
