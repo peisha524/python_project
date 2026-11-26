@@ -48,6 +48,7 @@ class RoadTile:
         row: int,
         terrain: TerrainType = TerrainType.GRASS,
         marker: TrackMarker = TrackMarker.NONE,
+        checkpoint_order: int | None = None,
     ):
         if col < 0 or row < 0:
             raise ValueError("Tile coordinates must be non-negative")
@@ -55,6 +56,7 @@ class RoadTile:
         self.row = row
         self.terrain = terrain
         self.marker = marker
+        self.checkpoint_order = checkpoint_order
         self.sprite: pygame.Surface | None = None
         self._sprite_cache_key: tuple[int, TerrainType, TrackMarker] | None = None
 

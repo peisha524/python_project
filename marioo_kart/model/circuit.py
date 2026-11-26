@@ -39,9 +39,14 @@ class Circuit:
 
     
         grid[1][cols // 2].marker = TrackMarker.START_FINISH
-        grid[rows // 2][cols - 2].marker = TrackMarker.CHECKPOINT
-        grid[rows - 2][cols // 2].marker = TrackMarker.CHECKPOINT
-        grid[rows // 2][1].marker = TrackMarker.CHECKPOINT
+        ordered_checkpoints = (
+            grid[rows // 2][cols - 2],
+            grid[rows - 2][cols // 2],
+            grid[rows // 2][1],
+        )
+        for order, tile in enumerate(ordered_checkpoints):
+            tile.marker = TrackMarker.CHECKPOINT
+            tile.checkpoint_order = order
         grid[1][cols // 2 + 2].marker = TrackMarker.BOOST
 
         return cls(grid)
@@ -70,11 +75,16 @@ class Circuit:
             raise ValueError("Every layout row must have the same width")
 
         grid: list[list[RoadTile]] = []
+        checkpoint_order = 0
         for row, line in enumerate(lines):
             tiles = []
             for col, symbol in enumerate(line):
                 if symbol in marker_by_symbol:
-                    tiles.append(RoadTile(col, row, TerrainType.ROAD, marker_by_symbol[symbol]))
+                    marker = marker_by_symbol[symbol]
+                    order = checkpoint_order if marker == TrackMarker.CHECKPOINT else None
+                    tiles.append(RoadTile(col, row, TerrainType.ROAD, marker, order))
+                    if marker == TrackMarker.CHECKPOINT:
+                        checkpoint_order += 1
                     continue
                 if symbol not in terrain_by_symbol:
                     raise ValueError(f"Unknown terrain symbol {symbol!r} at ({col}, {row})")
@@ -102,6 +112,16 @@ class Circuit:
 
     def tiles_with_marker(self, marker: TrackMarker) -> list[RoadTile]:
         return [tile for row in self.grid for tile in row if tile.marker == marker]
+
+    def checkpoint_tiles(self) -> list[RoadTile]:
+        checkpoints = self.tiles_with_marker(TrackMarker.CHECKPOINT)
+        return sorted(
+            checkpoints,
+            key=lambda tile: (
+                tile.checkpoint_order is None,
+                tile.checkpoint_order if tile.checkpoint_order is not None else tile.row * self.cols + tile.col,
+            ),
+        )
 
     def get_markers_at_pixel(self, px: float, py: float) -> frozenset[TrackMarker]:
         marker = self.get_marker_at_pixel(px, py)

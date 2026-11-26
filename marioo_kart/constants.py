@@ -12,11 +12,13 @@ CAR_TURN_RATE = 3.0
 CAR_MAX_SPEED = 4.0
 CAR_WIDTH = 30
 CAR_HEIGHT = 50
+TOTAL_LAPS = 3
 
 
 class GameState:
     MENU = "menu"
     RACING = "racing"
+    FINISHED = "finished"
 
 
 # --- Couleurs UI ---

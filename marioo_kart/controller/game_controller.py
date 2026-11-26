@@ -40,6 +40,8 @@ class GameController:
 
         if state == GameState.MENU:
             self.handle_menu_key(key)
+        elif state == GameState.FINISHED and key == pygame.K_RETURN:
+            self.model.state = GameState.MENU
 
     def handle_menu_key(self, key: int) -> None:
         if key == pygame.K_RETURN:
