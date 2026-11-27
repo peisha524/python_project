@@ -10,6 +10,7 @@ class GameModel:
         self.state: str = GameState.MENU
         self.circuit: Circuit | None = None
         self.car: Car | None = None
+        self.cars: list[Car] = []
         self.circuit_names = ["Circuit classique", "Circuit mixte"]
         self.selected_circuit_index = 0
 
@@ -27,9 +28,26 @@ class GameModel:
         self.spawn_car()
 
     def spawn_car(self) -> None:
-        start_line = self.circuit.tiles_with_marker(TrackMarker.START_FINISH)[0]
-        self.car = Car(start_line.col, start_line.row)
-        self.car.angle = 90.0
+        start_line = self.circuit.tiles_with_marker(
+            TrackMarker.START_FINISH
+        )[0]
+
+        car1 = Car(
+            start_line.col,
+            start_line.row,
+            color=(255, 0, 0),
+        )
+        car2 = Car(
+            start_line.col,
+            start_line.row + 1,
+            color=(0, 150, 255),
+        )
+
+        car1.angle = 90.0
+        car2.angle = 90.0
+
+        self.cars = [car1, car2]
+        self.car = car1
 
     def player_tile(self) -> RoadTile | None:
         if self.car is None or self.circuit is None:
@@ -44,5 +62,6 @@ class GameModel:
     def update(self) -> None:
         if self.state != GameState.RACING or self.circuit is None:
             return
-        if self.car is not None:
-            self.car.update_position(self.circuit)
+
+        for car in self.cars:
+            car.update_position(self.circuit)

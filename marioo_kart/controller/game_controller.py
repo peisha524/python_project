@@ -13,6 +13,8 @@ class GameController:
 
     def __init__(self):
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        pygame.key.stop_text_input()
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
         self.model = GameModel()
         self.view = GameView(self.screen)
@@ -33,6 +35,7 @@ class GameController:
 
             elif event.type == pygame.KEYDOWN:
                 self.handle_keydown(event.key)
+                
     def handle_keydown(self, key: int) -> None:
         state = self.model.state
 
@@ -76,11 +79,13 @@ class GameController:
         if self.model.state != GameState.RACING:
             return
 
-        p1_input = self.input_handler.get_inputs()
-        car = self.model.car
-        if car is None or self.model.circuit is None:
+        if self.model.circuit is None:
             return
-        self.apply_input(car, p1_input)
+
+        for player_id, car in enumerate(self.model.cars, start=1):
+            player_input = self.input_handler.get_inputs(player_id)
+            self.apply_input(car, player_input)
+
         self.model.update()
 
     def apply_input(self, car, player_input) -> None:

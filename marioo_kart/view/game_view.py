@@ -54,8 +54,9 @@ class GameView:
 
         if model.circuit is None:
             return
-        surf, rect = model.car.get_rotated_sprite()
-        self.screen.blit(surf, rect)
+        for car in model.cars:
+            surf, rect = car.get_rotated_sprite()
+            self.screen.blit(surf, rect)
 
 
     def _draw_track_select(self, model: GameModel) -> None:
@@ -83,7 +84,7 @@ class GameView:
         self.screen.blit(hint, hint.get_rect(center=(cx, 550)))
 
     def _draw_hud(self, model: GameModel) -> None:
-        if model.car is None:
+        if len(model.cars) < 2:
             return
 
         panel = pygame.Rect(10, 10, WINDOW_WIDTH - 20, 44)
@@ -94,18 +95,22 @@ class GameView:
         circuit_name = model.circuit_names[
             model.selected_circuit_index
         ]
-        speed = model.car.speed
-
-        text = self.font.render(
-            f"{circuit_name} | Vitesse : {speed:.1f} px/frame",
-            True, COLOR_TEXT
+        title = self.font.render(
+            circuit_name, True, COLOR_TEXT
         )
-        self.screen.blit(text, (22, 20))
+        self.screen.blit(title, (22, 20))
 
         hint = self.font.render(
             "Esc : circuits", True, COLOR_ACCENT
         )
         self.screen.blit(
             hint,
-            hint.get_rect(topright=(WINDOW_WIDTH - 22, 20))
+            hint.get_rect(topright=(WINDOW_WIDTH - 22, 18))
         )
+
+        for index, car in enumerate(model.cars):
+            text = self.font.render(
+                f"P{index + 1} : {car.speed:.1f} px/frame",
+                True, car.color
+            )
+            self.screen.blit(text, (300 + index * 250, 20))
